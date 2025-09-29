@@ -1,0 +1,407 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../../generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model appointments {
+  id            Int         @id @default(autoincrement())
+  userPatientId Int
+  userSystemId  Int
+  doctorName    String?     @db.VarChar(50)
+  sectionName   String?     @db.VarChar(100)
+  reportGuid    String      @db.VarChar(100)
+  appointmentId String      @db.VarChar(100)
+  date          DateTime    @db.Date
+  time          String      @db.VarChar(20)
+  userPatient   userpatient @relation(fields: [userPatientId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "appointments_ibfk_1")
+  userSystem    usersystem  @relation(fields: [userSystemId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "appointments_ibfk_2")
+
+  @@index([userPatientId], map: "userPatientId")
+  @@index([userSystemId], map: "userSystemId")
+}
+
+model departments {
+  id         Int    @id @default(autoincrement())
+  department String @db.VarChar(255)
+}
+
+model labels {
+  id         Int    @id @default(autoincrement())
+  label_name String @db.Text
+  color      String @db.VarChar(10)
+}
+
+model leadgen {
+  id            Int       @id @default(autoincrement())
+  userPatientId Int       @default(0)
+  page_id       String    @db.VarChar(50)
+  form_id       String?   @db.VarChar(50)
+  leadgen_id    String?   @db.VarChar(50)
+  whook         String?   @db.Text
+  created_date  DateTime? @db.DateTime(0)
+}
+
+model offers {
+  id                Int         @id @default(autoincrement())
+  userPatientId     Int
+  userSystemId      Int?
+  amount            Decimal     @default(0.00) @db.Decimal(20, 2)
+  currency          String      @db.Text
+  amount_paid       Decimal     @default(0.00) @db.Decimal(20, 2)
+  selected_services String?     @db.Text
+  date              DateTime    @db.DateTime(0)
+  userPatient       userpatient @relation(fields: [userPatientId], references: [id], onDelete: Cascade, map: "offers_ibfk_1")
+
+  @@index([userPatientId], map: "userPatientId")
+}
+
+model opportunities {
+  id                Int     @id @default(autoincrement())
+  opportunityName   String  @db.VarChar(250)
+  opportunityDetail String  @db.Text
+  instPostId        String? @db.VarChar(250)
+  instPostSrc       String? @db.VarChar(250)
+}
+
+model periods {
+  id            Int         @id @unique(map: "id") @default(autoincrement())
+  opportunityId Int
+  periotName    String?     @db.VarChar(50)
+  periotDetail  String?     @db.VarChar(255)
+  userSystemId  Int
+  userPatientId Int
+  currentStatus Int
+  messageType   Int?
+  userPatient   userpatient @relation(fields: [userPatientId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_user_patient_id")
+
+  @@index([messageType], map: "fk_message_type_id")
+  @@index([currentStatus], map: "fk_status_id")
+  @@index([userPatientId], map: "fk_user_patient_id")
+  @@index([userSystemId], map: "fk_user_system_id")
+}
+
+model settings {
+  id          Int     @id @default(autoincrement())
+  name        String  @unique(map: "key") @db.VarChar(50)
+  value       String  @db.Text
+  description String? @db.Text
+}
+
+model status {
+  id         Int    @id @default(autoincrement())
+  statusName String @db.VarChar(50)
+}
+
+model task {
+  id                 Int         @id @default(autoincrement())
+  taskName           String      @db.VarChar(255)
+  userPatientId      Int
+  taskDetail         String?     @db.VarChar(1000)
+  taskResult         Int         @default(0)
+  userSystemId       Int
+  performedByAdminId Int?        @default(0)
+  taskStartDate      DateTime    @default(now()) @db.DateTime(0)
+  taskFinishDate     DateTime?   @db.Date
+  taskFinishTime     DateTime    @db.Time(0)
+  userPatient        userpatient @relation(fields: [userPatientId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_user_patients_id")
+  userSystem         usersystem  @relation(fields: [userSystemId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_user_systems_id")
+
+  @@index([userPatientId], map: "fk_user_patients_id")
+  @@index([userSystemId], map: "fk_user_systems_id")
+}
+
+model user_departments {
+  id            Int       @id @default(autoincrement())
+  userSystemId  Int       @default(0)
+  userPatientId Int       @default(0)
+  departmentId  Int       @default(0)
+  createdAt     DateTime? @db.Timestamp(0)
+  updatedAt     DateTime? @db.Timestamp(0)
+
+  @@index([departmentId], map: "departmentId")
+  @@index([userPatientId], map: "userPatientId")
+  @@index([userSystemId], map: "userSystemId")
+}
+
+model user_labels {
+  id            Int       @id @default(autoincrement())
+  userSystemId  Int       @default(0)
+  userPatientId Int       @default(0)
+  labels        String    @db.VarChar(255)
+  createdAt     DateTime? @db.Timestamp(0)
+  updatedAt     DateTime? @db.Timestamp(0)
+
+  @@index([userPatientId], map: "userPatientId")
+  @@index([userSystemId], map: "userSystemId")
+}
+
+model user_notes {
+  id            Int       @id @default(autoincrement())
+  userSystemId  Int       @default(0)
+  userPatientId Int       @default(0)
+  notes         String    @db.VarChar(255)
+  createdAt     DateTime? @db.Timestamp(0)
+  updatedAt     DateTime? @db.Timestamp(0)
+
+  @@index([userPatientId], map: "userPatientId")
+  @@index([userSystemId], map: "userSystemId")
+}
+
+model refreshtokens {
+  id         Int        @id @default(autoincrement())
+  userId     Int
+  token      String     @unique(map: "refreshTokens_token_key") @db.VarChar(512)
+  userAgent  String?    @db.VarChar(500)
+  ipAddress  String?    @db.VarChar(45)
+  isActive   Boolean    @default(true)
+  lastUsed   DateTime   @default(now())
+  expiresAt  DateTime
+  createdAt  DateTime   @default(now())
+  userSystem usersystem @relation(fields: [userId], references: [id], onDelete: Cascade, map: "refreshtokens_ibfk_1")
+
+  @@index([token], map: "refreshTokens_token_idx")
+  @@index([userId], map: "refreshTokens_userId_idx")
+}
+
+model call_events {
+  id              Int       @id @default(autoincrement())
+  urltoken        String?   @db.VarChar(255)
+  eventdate       DateTime? @db.DateTime(6)
+  company         String?   @db.VarChar(255)
+  direction       String?   @db.VarChar(50)
+  prevapplication String?   @db.VarChar(50)
+  application     String?   @db.VarChar(50)
+  origcli         String?   @db.VarChar(50)
+  did             String?   @db.VarChar(50)
+  cli             String?   @db.VarChar(50)
+  cld             String?   @db.VarChar(50)
+  uniqueid        String?   @db.VarChar(100)
+  dialstatus      String?   @db.VarChar(50)
+  specs           String?   @db.Text
+  xfer            String?   @db.Text
+  ivrid           String?   @db.Text
+  ivrdtmf         String?   @db.Text
+  ivrsec          String?   @db.Text
+  ivrvar          String?   @db.Text
+  recordfilename  String?   @db.VarChar(255)
+  variable        String?   @db.Text
+  result          String?   @db.Text
+  created_at      DateTime? @db.Timestamp(0)
+}
+
+model chatlisttwo {
+  id              Int         @id @default(autoincrement())
+  userSystemId    Int         @default(0)
+  userPatientId   Int         @default(0)
+  messageId       String?     @db.VarChar(255)
+  quotedMessageId String      @db.VarChar(255)
+  editedMessageId String?     @db.VarChar(255)
+  channelId       String?     @db.VarChar(255)
+  chatType        String?     @db.VarChar(255)
+  isEcho          String      @db.VarChar(10)
+  chatId          String?     @db.VarChar(255)
+  authorName      String?     @db.VarChar(100)
+  groupSender     String?     @db.VarChar(255)
+  groupChatId     String?     @db.VarChar(255)
+  dateTime        DateTime?   @db.DateTime(0)
+  type            String?     @db.VarChar(50)
+  status          String?     @db.VarChar(50)
+  text            String?     @db.Text
+  instPostSrc     String?     @db.VarChar(250)
+  contentUri      String?     @db.Text
+  message_read    Int         @default(0)
+  wazz            String      @db.Text
+  userpatient     userpatient @relation(fields: [userPatientId], references: [id], onDelete: Cascade, map: "chatListTwo_ibfk_1")
+
+  @@index([channelId, chatId], map: "channelId")
+  @@index([userPatientId], map: "chatListTwo_ibfk_1")
+  @@index([messageId], map: "messageId")
+  @@index([userSystemId], map: "userSystemId")
+}
+
+model crmlogs {
+  id            Int       @id @default(autoincrement())
+  hospital_id   Int?      @default(1)
+  userSystemId  Int
+  action        String    @db.VarChar(255)
+  created_at    DateTime? @db.Timestamp(0)
+  details       String?   @db.Text
+  request_body  String?   @db.Text
+  response_body String?   @db.Text
+  response_time Int?
+  http_status   Int?
+  error_message String?   @db.Text
+  header        String?   @db.Text
+  
+  @@index([hospital_id], map: "crmlogs_hospital_id_idx")
+  @@index([userSystemId], map: "crmlogs_userSystemId_idx")
+}
+
+model hospital_service_details {
+  id       Int     @id @default(autoincrement())
+  name     String  @db.VarChar(255)
+  price    Decimal @db.Decimal(10, 2)
+  type     String  @db.VarChar(100)
+  status   Boolean @default(true)
+  currency String  @db.VarChar(10)
+}
+
+model sheets {
+  sheetId       Int     @id @default(autoincrement())
+  sheetName     String  @db.VarChar(200)
+  messageId     Int
+  messageData   String  @db.Text
+  createdDate   DateTime
+  userSystemId  Int
+}
+
+
+model patient_details {
+  id          Int       @id @default(autoincrement())
+  UPN         String?   @db.VarChar(50)
+  TCKNo       String?   @db.VarChar(50)
+  PassportNo  String?   @db.VarChar(50)
+  Name        String?   @db.VarChar(100)
+  Surname     String?   @db.VarChar(100)
+  FatherName  String?   @db.VarChar(100)
+  Gender      String?   @db.VarChar(20)
+  BirthDate   String?   @db.VarChar(10)
+  PhoneNumber String?   @db.VarChar(20)
+  Email       String?   @db.VarChar(100)
+  created_at  DateTime? @db.Timestamp(0)
+}
+
+model quickmessages {
+  id      Int    @id @default(autoincrement())
+  message String @db.VarChar(500)
+}
+
+model userpatient {
+  id           Int            @id @unique(map: "id") @default(autoincrement())
+  hospital_id  Int            @default(1) // Her hasta artık bir hastaneye bağlı
+  userSystemId Int            @default(0)
+  identityId   String?        @db.VarChar(20)
+  fileNumber   String?        @db.VarChar(20)
+  profileName  String         @db.VarChar(50)
+  avatar       String?        @db.VarChar(350)
+  name         String?        @db.VarChar(255)
+  surname      String?        @db.VarChar(255)
+  channelId    String?        @db.VarChar(200)
+  chatId       String?        @default("0") @db.VarChar(250)
+  chatType     String         @db.VarChar(50)
+  phoneNumber  String         @db.VarChar(20)
+  countryCode  String?        @db.VarChar(10)
+  mail         String?        @db.VarChar(255)
+  gender       Int?
+  birthDate    String?        @db.VarChar(20)
+  language     String?        @default("") @db.VarChar(10)
+  registerDate DateTime       @db.DateTime(0)
+  
+  // İlişkiler
+  hospital     crm_hospitals  @relation(fields: [hospital_id], references: [id], onDelete: Cascade)
+  appointments appointments[]
+  chatlisttwo  chatlisttwo[]
+  offers       offers[]
+  periods      periods[]
+  task         task[]
+
+  @@index([userSystemId], map: "userSystemId")
+  @@index([hospital_id], map: "userpatient_hospital_id_idx")
+}
+
+model usersystem {
+  id            Int             @id @default(autoincrement())
+  userSystemId  Int?            @default(0)
+  sourceId      String?         @db.VarChar(200)
+  channelId     String          @db.Text
+  phoneNumber   String          @db.VarChar(20)
+  name          String          @db.VarChar(50)
+  username      String          @db.VarChar(50)
+  password      String          @db.VarChar(100)
+  role          Int
+  ip_adress     String          @db.VarChar(500)
+  appointments  appointments[]
+  refreshtokens refreshtokens[]
+  task          task[]
+}
+
+// Hospital ve multi-tenant modelleri - artık tek veritabanında
+model crm_hospitals {
+  id                Int              @id @default(autoincrement())
+  domain            String           @unique @db.VarChar(100)
+  title             String           @db.VarChar(255)
+  logo              String           @db.VarChar(500)
+  folder            String           @db.VarChar(100)
+  app_id            String?          @db.VarChar(20)
+  hospital_list_id  String?          @db.VarChar(20)
+  wazzup_api        String?          @db.VarChar(255)
+  sms_sender        String?          @db.VarChar(50)
+  sms_title         String?          @db.VarChar(50)
+  sms_kullanici_adi String?          @db.VarChar(50)
+  sms_sifre         String?          @db.VarChar(50)
+  fb_page_id        String?          @db.VarChar(100)
+  fb_leadgen_token  String?          @db.VarChar(255)
+  created_at        DateTime?        @default(now()) @db.DateTime(0)
+  updated_at        DateTime?        @default(now()) @db.DateTime(0)
+  status            hospital_status? @default(active)
+  
+  // İlişkiler - artık tüm veriler aynı veritabanında
+  userpatients      userpatient[]
+  usersystems       usersystem_hospital[]
+  channels          crm_channels[]
+}
+
+model crm_channels {
+  id          Int           @id @default(autoincrement())
+  channelid   String        @unique @db.VarChar(50)
+  name        String?       @db.VarChar(50)
+  host        String?       @db.VarChar(30)
+  server      String?       @db.VarChar(50)
+  hospital_id Int?
+  hospital    crm_hospitals? @relation(fields: [hospital_id], references: [id], onDelete: SetNull)
+}
+
+model admin_users {
+  id          Int           @id @default(autoincrement())
+  username    String        @unique @db.VarChar(50)
+  password    String        @db.VarChar(100)
+  name        String?       @db.VarChar(100)
+  phone       String?       @db.VarChar(20)
+  role        String        @default("user") @db.VarChar(20)
+  created_at  DateTime?     @default(now()) @db.DateTime(0)
+  updated_at  DateTime?     @default(now()) @db.DateTime(0)
+  user_tokens admin_user_tokens[]
+}
+
+model admin_user_tokens {
+  id         Int         @id @default(autoincrement())
+  user_id    Int
+  token      String      @db.VarChar(512)
+  expires_at DateTime    @db.DateTime(0)
+  created_at DateTime?   @default(now()) @db.DateTime(0)
+  admin_user admin_users @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  
+  @@index([user_id], map: "admin_user_tokens_user_id_idx")
+}
+
+model usersystem_hospital {
+  id           Int           @id @default(autoincrement())
+  hospital_id  Int
+  usersystem_id Int
+  created_at   DateTime?     @default(now()) @db.DateTime(0)
+  hospital     crm_hospitals @relation(fields: [hospital_id], references: [id], onDelete: Cascade)
+  
+  @@unique([hospital_id, usersystem_id])
+  @@index([hospital_id], map: "usersystem_hospital_hospital_id_idx")
+  @@index([usersystem_id], map: "usersystem_hospital_usersystem_id_idx")
+}
+
+enum hospital_status {
+  active
+  inactive
+}
